@@ -8,6 +8,8 @@
     <title>Colletive Work - Space</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.js"></script>
     <script src="src/scripts/HubHandler.js"></script>
+    <script src="src/scripts/Reciver/Reciver.js"></script>
+    <!-- <script src="src//scripts/DrownBox/DrownBox.js"></script> -->
 
     <!-- render page content only before connect to hub -->
     <script>
@@ -15,7 +17,7 @@
             const connection = new signalR.HubConnectionBuilder()
                 .withUrl("http://localhost:5000/chatHub")
                 .configureLogging(signalR.LogLevel.Information)
-                .withAutomaticReconnect() 
+                .withAutomaticReconnect()
                 .build();
 
             connection.on("GetMousePositionUser", (user, message) => {
@@ -24,13 +26,11 @@
 
             connection.on("error", error => {
                 console.log(error)
-            })
+            });
 
             connection.onclose((error) => {
                 console.log("Connection closed:", error);
-
             });
-
 
             connection.onreconnecting(error => {
                 console.assert(connection.state === signalR.HubConnectionState.Reconnecting);
@@ -44,7 +44,7 @@
                 renderConnectionStatus(connection);
             });
 
-            //start connection with server, just when it start, the page display the content
+            // Start connection with server, just when it starts, the page displays the content
             connection.start()
                 .then(() => {
                     console.log("Connected with success!");
@@ -56,27 +56,51 @@
                     console.error("Error at connect:", err);
                 });
 
+            // Function to check connection state and send position if connected
             document.addEventListener("click", () => {
-                if (connection.state === signalR.HubConnectionState.Connected) {
-                    GetMousePositionUserFunc(connection);
-                } else {
-                    console.log("Connection is not established yet");
+                function CheckState() {
+                    if (connection.state === signalR.HubConnectionState.Connected) {
+                        return true;
+                    } else {
+                        console.log("Connection is not established yet");
+                        return false;
+                    }
+                }
+                if (CheckState()) {
+                    sendPosition(connection);
                 }
             });
-        });
-    </script>
 
+        });
+
+
+
+        //dragable box
+
+
+    </script>
 </head>
 
 <body>
-    <!-- display an icon that shows connection status -->
+    <!-- Display an icon that shows connection status -->
     <span class="hubStatusSpan"> </span>
 
+    <!-- Page content -->
     <div class="globalAppConteiner">
-        <!-- page content -->
+        <div class="boxUser" id="boxUser">
+            <p>a</p>
+        </div>
+
+        <!-- Inputs for position X and Y -->
+        <input type="number" placeholder="Position X" id="positionX" onchange="UpdatepositionX(this.value)">
+        <input type="number" placeholder="Position Y" id="positionY" onchange="UpdatepositionY(this.value)">
+
+        <!-- Button to send position -->
+        <button class="sendPosition" onclick="sendPosition()">sendPosition</button>
+
     </div>
 
-</body>
 
+</body>
 
 </html>
