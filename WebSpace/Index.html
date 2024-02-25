@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="src/Styles.css">
+    <title>Colletive Work - Space</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.js"></script>
+    <script src="src/scripts/HubHandler.js"></script>
+
+    <!-- render page content only before connect to hub -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("http://localhost:5000/chatHub")
+                .configureLogging(signalR.LogLevel.Information)
+                .withAutomaticReconnect() 
+                .build();
+
+            connection.on("GetMousePositionUser", (user, message) => {
+                console.log(Object(message));
+            });
+
+            connection.on("error", error => {
+                console.log(error)
+            })
+
+            connection.onclose((error) => {
+                console.log("Connection closed:", error);
+
+            });
+
+
+            connection.onreconnecting(error => {
+                console.assert(connection.state === signalR.HubConnectionState.Reconnecting);
+                renderConnectionStatus(connection);
+                console.log("Reconnecting...", error);
+            });
+
+            connection.onreconnected(connectionId => {
+                console.assert(connection.state === signalR.HubConnectionState.Connected);
+                console.log("Reconnected with connectionId:", connectionId);
+                renderConnectionStatus(connection);
+            });
+
+            //start connection with server, just when it start, the page display the content
+            connection.start()
+                .then(() => {
+                    console.log("Connected with success!");
+                    console.log("calling render content");
+                    renderConnectionStatus(connection);
+                })
+                .catch((err) => {
+                    renderConnectionStatus(connection);
+                    console.error("Error at connect:", err);
+                });
+
+            document.addEventListener("click", () => {
+                if (connection.state === signalR.HubConnectionState.Connected) {
+                    GetMousePositionUserFunc(connection);
+                } else {
+                    console.log("Connection is not established yet");
+                }
+            });
+        });
+    </script>
+
+</head>
+
+<body>
+    <!-- display an icon that shows connection status -->
+    <span class="hubStatusSpan"> </span>
+
+    <div class="globalAppConteiner">
+        <!-- page content -->
+    </div>
+
+</body>
+
+
+</html>
